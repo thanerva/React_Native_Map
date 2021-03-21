@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Dimensions,
@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
 
 export default function App() {
   const [region, setRegion] = useState({
@@ -18,8 +19,32 @@ export default function App() {
     longitudeDelta: 0.0221,
   });
   const [address, setAddress] = useState("");
+  const [location, setLocation] = useState(null);
 
-  const findlocation = () => {
+  useEffect(() => {
+    getLocation();
+  }, []);
+
+  const getLocation = async () => {
+    // permission check
+    let { status } = await Location.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("No permission to access location");
+    } else {
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      let lat = location.coords.latitude;
+      let lon = location.coords.longitude;
+      setRegion({
+        latitude: lat,
+        longitude: lon,
+        latitudeDelta: 0.0322,
+        longitudeDelta: 0.0221,
+      });
+    }
+  };
+
+  const findDestination = () => {
     const url = `http://www.mapquestapi.com/geocoding/v1/address?key=JCydjBLIApW9OdqKbYBN6yCJpMrQeFil&location=${address}`;
     fetch(url)
       .then((response) => response.json())
@@ -47,7 +72,7 @@ export default function App() {
         placeholder="syötä sijainti"
         onChangeText={(address) => setAddress(address)}
       />
-      <Button onPress={findlocation} title="Hae" />
+      <Button onPress={findDestination} title="Hae" />
     </View>
   );
 }
